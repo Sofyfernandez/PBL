@@ -1,100 +1,133 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+
+import { calcEOQ, BASE } from '@/lib/eoq';
+import { getDemandaAnual, getEscenarios, Escenario } from '@/lib/supabase';
+
+import ParamSliders from '@/components/ParamSliders';
+import KpiPanel from '@/components/KpiPanel';
+import DemandaBanner from '@/components/DemandaBanner';
+
+const ChartTC         = dynamic(() => import('@/components/ChartTC'),        { ssr: false });
+const ChartQvsD       = dynamic(() => import('@/components/ChartQvsD'),      { ssr: false });
+const ChartQvsS       = dynamic(() => import('@/components/ChartQvsS'),      { ssr: false });
+const EscenariosPanel = dynamic(() => import('@/components/EscenariosPanel'), { ssr: false });
+
+export default function HomePage() {
+  const [D, setD] = useState(BASE.D);
+  const [S, setS] = useState(BASE.S);
+
+  const result = calcEOQ(D, S);
+
+  const [dReal, setDReal]           = useState<number | null>(null);
+  const [escenarios, setEscenarios] = useState<Escenario[]>([]);
+  const [supabaseOk, setSupabaseOk] = useState(true);
+
+  useEffect(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl === 'your_supabase_url') {
+      setSupabaseOk(false);
+      return;
+    }
+
+    getDemandaAnual()
+      .then(d => { if (d > 0) setDReal(d); })
+      .catch(() => setSupabaseOk(false));
+
+    loadEscenarios();
+  }, []);
+
+  const loadEscenarios = useCallback(async () => {
+    try {
+      const data = await getEscenarios();
+      setEscenarios(data);
+    } catch {
+      // Supabase no configurado aún — no bloquea la app
+    }
+  }, []);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <header className="bg-[#1a3a5c] text-white px-8 py-4 flex items-center gap-4">
+        <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center font-extrabold text-lg flex-shrink-0">
+          R
         </div>
+        <div>
+          <h1 className="text-lg font-bold leading-tight">Simulador EOQ — RICOL SAS</h1>
+          <p className="text-blue-300 text-xs mt-0.5">
+            PEAD Alta Soplado &nbsp;·&nbsp; Cantidad Económica de Pedido &nbsp;·&nbsp; PBL Optimización 2026
+          </p>
+        </div>
+      </header>
+
+      <main className="flex-1 p-6 flex flex-col gap-5 max-w-[1600px] w-full mx-auto">
+
+        {dReal && <DemandaBanner dReal={dReal} dActual={D} />}
+
+        {!supabaseOk && (
+          <div className="bg-yellow-50 border border-yellow-300 rounded-xl px-5 py-3 text-sm text-yellow-800">
+            <span className="font-semibold">⚠ Supabase no configurado.</span>{' '}
+            Agrega <code className="bg-yellow-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> y{' '}
+            <code className="bg-yellow-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> en{' '}
+            <code className="bg-yellow-100 px-1 rounded">.env.local</code> para habilitar historial y escenarios.
+            El simulador funciona completamente sin conexión.
+          </div>
+        )}
+
+        <div className="grid grid-cols-[340px_1fr] gap-4">
+          <ParamSliders D={D} S={S} onChangeD={setD} onChangeS={setS} />
+          <KpiPanel result={result} />
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-3">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+              Zona óptima — Costo Total vs Q
+            </p>
+            <div className="h-64">
+              <ChartTC D={D} S={S} Qstar={result.Qstar} Qfinal={result.Qfinal} />
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-3">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+              Pulso del mercado — Q* vs Demanda D
+            </p>
+            <div className="h-64">
+              <ChartQvsD D={D} S={S} />
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-3">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+              Presión logística — Q* vs Costo de Pedir S
+            </p>
+            <div className="h-64">
+              <ChartQvsS D={D} S={S} />
+            </div>
+          </div>
+
+        </div>
+
+        {supabaseOk && (
+          <EscenariosPanel
+            D={D}
+            S={S}
+            result={result}
+            escenarios={escenarios}
+            onSaved={loadEscenarios}
+          />
+        )}
+
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      <footer className="text-center py-4 text-xs text-gray-400">
+        PBL Optimización 202610 — ICESI &nbsp;·&nbsp;
+        Laura Fernández · Alejandro Valencia · José Manuel De Las Salas &nbsp;·&nbsp; Junio 2026
       </footer>
     </div>
   );
