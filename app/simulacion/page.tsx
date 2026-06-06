@@ -4,6 +4,7 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { calcEOQ, BASE, PARAMS } from '@/lib/eoq';
 import TopBar from '@/components/TopBar';
+import { IconInfo } from '@/components/Icons';
 
 const ChartTC = dynamic(() => import('@/components/ChartTC'), { ssr: false });
 
@@ -61,8 +62,9 @@ export default function SimulacionPage() {
             </div>
           ))}
 
-          <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700 border border-blue-200">
-            <span className="font-bold">ℹ Ajustar el Lead Time</span> impactará directamente el Punto de Re-orden (ROP).
+          <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700 border border-blue-200 flex gap-2">
+            <IconInfo size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
+            <span><span className="font-bold">Ajustar el Lead Time</span> impactará directamente el Punto de Re-orden (ROP).</span>
           </div>
         </div>
 

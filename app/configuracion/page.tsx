@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { PARAMS, Q_CAP } from '@/lib/eoq';
 import TopBar from '@/components/TopBar';
+import { IconConfiguracion, IconCheck } from '@/components/Icons';
 
 export default function ConfiguracionPage() {
   const [H, setH] = useState<number>(PARAMS.H);
@@ -31,7 +32,7 @@ export default function ConfiguracionPage() {
         {/* Parámetros globales */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 flex flex-col gap-6">
           <div className="flex items-center gap-3">
-            <span className="text-xl">⚙</span>
+            <IconConfiguracion size={20} className="text-blue-600" />
             <div>
               <h2 className="font-bold text-gray-900">Parámetros de Operación</h2>
               <p className="text-xs text-gray-400">Modifica los parámetros fijos del modelo EOQ. Los cambios afectan todos los cálculos.</p>
@@ -96,7 +97,7 @@ export default function ConfiguracionPage() {
             </button>
             <button onClick={handleSave}
               className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
-              {saved ? '✓ Guardado' : 'Guardar Cambios'}
+              {saved ? <span className="flex items-center gap-1.5"><IconCheck size={14} /> Guardado</span> : 'Guardar Cambios'}
             </button>
           </div>
         </div>

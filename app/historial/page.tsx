@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getEscenarios, deleteEscenario, isSupabaseConfigured, Escenario } from '@/lib/supabase';
 import TopBar from '@/components/TopBar';
+import { IconSearch, IconTrash } from '@/components/Icons';
 
 const fmt  = (v: number) => Math.round(v).toLocaleString('es-CO');
 const fmt1 = (v: number) => v.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -39,7 +40,7 @@ export default function HistorialPage() {
         {/* Barra de búsqueda */}
         <div className="flex items-center gap-3">
           <div className="flex-1 relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><IconSearch size={15} /></span>
             <input type="text" placeholder="Buscar por nombre de escenario..."
               value={busqueda} onChange={e => setBusqueda(e.target.value)}
               className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
@@ -71,7 +72,9 @@ export default function HistorialPage() {
                 <span className="text-sm text-gray-600 tabular-nums">{fmt1(e.N)}</span>
                 <span className="text-sm text-gray-600 tabular-nums">{fmt1(e.T)}</span>
                 <button onClick={() => handleDelete(e.id!)}
-                  className="text-gray-300 hover:text-red-500 transition-colors text-lg font-bold leading-none">×</button>
+                  className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded">
+                  <IconTrash size={14} />
+                </button>
               </div>
             ))
           )}

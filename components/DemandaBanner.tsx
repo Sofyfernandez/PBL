@@ -1,5 +1,7 @@
 'use client';
 
+import { IconPackage } from '@/components/Icons';
+
 const fmt = (v: number) => Math.round(v).toLocaleString('es-CO');
 
 interface Props {
@@ -15,8 +17,9 @@ export default function DemandaBanner({ dReal, dActual }: Props) {
 
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-3 flex items-center gap-4 text-sm">
-      <span className="text-blue-800 font-semibold">
-        📦 Demanda real histórica (Supabase):
+      <span className="text-blue-800 font-semibold flex items-center gap-2">
+        <IconPackage size={15} className="text-blue-500" />
+        Demanda real histórica (Supabase):
       </span>
       <span className="text-blue-700 font-bold tabular-nums">{fmt(dReal)} kg/año</span>
       {diff !== 0 && (

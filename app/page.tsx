@@ -6,6 +6,7 @@ import { calcEOQ, BASE, Q_CAP } from '@/lib/eoq';
 import { getDemandaAnual, getEscenarios, isSupabaseConfigured, Escenario } from '@/lib/supabase';
 import TopBar from '@/components/TopBar';
 import EscenariosPanel from '@/components/EscenariosPanel';
+import { IconAlert, IconCheck, IconCircleCheck } from '@/components/Icons';
 
 const ChartTC   = dynamic(() => import('@/components/ChartTC'),   { ssr: false });
 const ChartQvsD = dynamic(() => import('@/components/ChartQvsD'), { ssr: false });
@@ -99,7 +100,7 @@ export default function DashboardPage() {
               <div className="w-full bg-gray-100 rounded-full h-1.5">
                 <div className="bg-gray-400 h-1.5 rounded-full" style={{ width: `${Math.min(100, (result.N / 24) * 100)}%` }} />
               </div>
-              <span className="text-xs text-green-600 font-semibold">⊙ CICLO OPTIMIZADO</span>
+              <span className="text-xs text-green-600 font-semibold flex items-center gap-1"><IconCheck size={12} /> CICLO OPTIMIZADO</span>
             </div>
 
             {/* T */}
@@ -123,13 +124,15 @@ export default function DashboardPage() {
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">ROP (Punto de Reorden)</p>
               <p className="text-2xl font-bold text-gray-900 tabular-nums">{fmt(result.ROP)} kg</p>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full w-fit ${result.restriccionActiva ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                {result.restriccionActiva ? '⚠ NIVEL DE ALERTA' : '✓ NIVEL SEGURO'}
+                <span className="flex items-center gap-1">
+                  {result.restriccionActiva ? <><IconAlert size={11} /> NIVEL DE ALERTA</> : <><IconCheck size={11} /> NIVEL SEGURO</>}
+                </span>
               </span>
             </div>
 
             {/* Eficiencia */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1 items-center justify-center">
-              <div className="text-3xl text-blue-600">✓</div>
+              <IconCircleCheck size={32} className="text-blue-600" />
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider text-center">Estado de Operación</p>
               <p className="text-sm font-bold text-gray-800">
                 Eficiencia {(Math.min(100, (result.Qfinal / result.Qstar) * 100)).toFixed(1)}%

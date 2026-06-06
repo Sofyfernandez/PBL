@@ -1,6 +1,7 @@
 'use client';
 
 import { EOQResult, Q_CAP } from '@/lib/eoq';
+import { IconAlert } from '@/components/Icons';
 
 interface Props {
   result: EOQResult;
@@ -47,7 +48,7 @@ export default function KpiPanel({ result }: Props) {
       {/* Alerta restricción bodega */}
       {restriccionActiva && (
         <div className="bg-orange-50 border border-orange-400 rounded-lg px-4 py-3 text-sm">
-          <p className="font-bold text-orange-700">⚠ Restricción de bodega activa</p>
+          <p className="font-bold text-orange-700 flex items-center gap-1.5"><IconAlert size={14} className="text-orange-500" /> Restricción de bodega activa</p>
           <p className="text-orange-600 text-xs mt-1">
             Q* supera la capacidad máxima de bodega (Q<sub>cap</sub> = {fmt(Q_CAP)} kg).
             Se usa Q<sub>final</sub> = Q<sub>cap</sub> como lote efectivo.

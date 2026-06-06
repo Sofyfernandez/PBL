@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Escenario, saveEscenario, deleteEscenario } from '@/lib/supabase';
 import { EOQResult } from '@/lib/eoq';
+import { IconTrash } from '@/components/Icons';
 
 interface Props {
   D: number;
@@ -107,10 +108,10 @@ export default function EscenariosPanel({ D, S, result, escenarios, onSaved }: P
                   <td className="py-2">
                     <button
                       onClick={() => handleDelete(e.id!)}
-                      className="text-gray-300 hover:text-red-500 transition-colors text-base leading-none"
+                      className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded"
                       title="Eliminar"
                     >
-                      ×
+                      <IconTrash size={13} />
                     </button>
                   </td>
                 </tr>

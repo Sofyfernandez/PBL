@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { calcEOQ, BASE, Q_CAP } from '@/lib/eoq';
 import TopBar from '@/components/TopBar';
+import { IconCircleCheck } from '@/components/Icons';
 
 const ChartQvsD = dynamic(() => import('@/components/ChartQvsD'), { ssr: false });
 const ChartQvsS = dynamic(() => import('@/components/ChartQvsS'), { ssr: false });
@@ -96,8 +97,9 @@ export default function AnalisisPage() {
               ))}
             </div>
 
-            <div className="mt-2 bg-green-50 border border-green-200 rounded-lg p-3 text-xs text-green-700">
-              <span className="font-bold">✓ Restricción de bodega NO activa.</span> Q* ({fmt(base.Qstar)} kg) {'<'} Q_cap ({fmt(Q_CAP)} kg). El lote óptimo es completamente factible.
+            <div className="mt-2 bg-green-50 border border-green-200 rounded-lg p-3 text-xs text-green-700 flex gap-2">
+              <IconCircleCheck size={14} className="text-green-500 flex-shrink-0 mt-0.5" />
+              <span><span className="font-bold">Restricción de bodega NO activa.</span> Q* ({fmt(base.Qstar)} kg) &lt; Q_cap ({fmt(Q_CAP)} kg). El lote óptimo es completamente factible.</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-auto">
