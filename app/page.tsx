@@ -18,6 +18,7 @@ const EscenariosPanel = dynamic(() => import('@/components/EscenariosPanel'), { 
 export default function HomePage() {
   const [D, setD] = useState<number>(BASE.D);
   const [S, setS] = useState<number>(BASE.S);
+  const [grafica, setGrafica] = useState<'tc' | 'd' | 's'>('tc');
 
   const result = calcEOQ(D, S);
 
@@ -81,35 +82,26 @@ export default function HomePage() {
           <KpiPanel result={result} />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-3">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
             <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-              Zona óptima — Costo Total vs Q
+              Visualización de Sensibilidad
             </p>
-            <div className="h-64">
-              <ChartTC D={D} S={S} Qstar={result.Qstar} Qfinal={result.Qfinal} />
-            </div>
+            <select
+              value={grafica}
+              onChange={e => setGrafica(e.target.value as typeof grafica)}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer"
+            >
+              <option value="tc">Curva de equilibrio — TC vs Q</option>
+              <option value="d">Pulso del mercado — Q* vs Demanda D</option>
+              <option value="s">Presión logística — Q* vs Costo de Pedir S</option>
+            </select>
           </div>
-
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-3">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-              Pulso del mercado — Q* vs Demanda D
-            </p>
-            <div className="h-64">
-              <ChartQvsD D={D} S={S} />
-            </div>
+          <div className="h-72">
+            {grafica === 'tc' && <ChartTC D={D} S={S} Qstar={result.Qstar} Qfinal={result.Qfinal} />}
+            {grafica === 'd'  && <ChartQvsD D={D} S={S} />}
+            {grafica === 's'  && <ChartQvsS D={D} S={S} />}
           </div>
-
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-3">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-              Presión logística — Q* vs Costo de Pedir S
-            </p>
-            <div className="h-64">
-              <ChartQvsS D={D} S={S} />
-            </div>
-          </div>
-
         </div>
 
         {supabaseOk && (
