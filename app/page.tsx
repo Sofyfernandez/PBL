@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 
 import { calcEOQ, BASE } from '@/lib/eoq';
-import { getDemandaAnual, getEscenarios, Escenario } from '@/lib/supabase';
+import { getDemandaAnual, getEscenarios, isSupabaseConfigured, Escenario } from '@/lib/supabase';
 
 import ParamSliders from '@/components/ParamSliders';
 import KpiPanel from '@/components/KpiPanel';
@@ -16,8 +16,8 @@ const ChartQvsS       = dynamic(() => import('@/components/ChartQvsS'),      { s
 const EscenariosPanel = dynamic(() => import('@/components/EscenariosPanel'), { ssr: false });
 
 export default function HomePage() {
-  const [D, setD] = useState(BASE.D);
-  const [S, setS] = useState(BASE.S);
+  const [D, setD] = useState<number>(BASE.D);
+  const [S, setS] = useState<number>(BASE.S);
 
   const result = calcEOQ(D, S);
 
@@ -26,8 +26,7 @@ export default function HomePage() {
   const [supabaseOk, setSupabaseOk] = useState(true);
 
   useEffect(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl || supabaseUrl === 'your_supabase_url') {
+    if (!isSupabaseConfigured()) {
       setSupabaseOk(false);
       return;
     }
