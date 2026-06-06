@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Simulador EOQ — RICOL SAS
 
-## Getting Started
+Herramienta web interactiva para optimizar las decisiones de importación de **PEAD Alta Soplado** en RICOL SAS, empresa caleña proveedora de materias primas para la industria del plástico.
 
-First, run the development server:
+El simulador implementa el modelo de **Cantidad Económica de Pedido (EOQ)** y permite al equipo de compras explorar escenarios en tiempo real, sin necesidad de conocimientos técnicos en optimización.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## ¿Qué hace?
+
+- Calcula el lote óptimo de importación **Q\*** que minimiza el costo total anual de inventario
+- Muestra en tiempo real los indicadores clave: pedidos al año, tiempo entre pedidos, costo total y punto de reorden
+- Alerta cuando el lote óptimo supera la capacidad física de la bodega (100.000 kg)
+- Presenta tres análisis de sensibilidad interactivos: cómo cambia Q\* al variar la demanda o el costo de pedir
+- Permite guardar y comparar escenarios explorados
+
+## Modelo matemático
+
+Basado en la Fórmula de Wilson (EOQ clásico):
+
+```
+Q* = √(2·D·S / H)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Parámetro | Descripción | Valor base |
+|---|---|---|
+| D | Demanda anual | 859.300 kg/año |
+| S | Costo de pedir por orden | $6.000.000 COP |
+| H | Costo de mantener por kg/año | $2.000 COP |
+| B | Capacidad de bodega | 500 m² |
+| L | Lead time de importación | 30 días |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Configuración
 
-## Learn More
+### Variables de entorno
 
-To learn more about Next.js, take a look at the following resources:
+Crea un archivo `.env.local` en la raíz del proyecto:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Base de datos (Supabase)
 
-## Deploy on Vercel
+Ejecuta en el SQL Editor de tu proyecto Supabase:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. `supabase/schema.sql` — crea las tablas
+2. `supabase/seed.sql` — carga el historial de demanda de RICOL SAS (mar 2025 – mar 2026)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+El simulador funciona completamente sin Supabase — los cálculos son client-side.
+
+---
+
+## Instalación local
+
+```bash
+npm install
+npm run dev
+```
+
+Abre [http://localhost:3000](http://localhost:3000).
+
+## Despliegue
+
+El proyecto está conectado a Vercel. Cada push a `main` genera un deploy automático.
+
+Agrega `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en la configuración de entorno de Vercel.
+
+---
+
+## Stack
+
+- **Next.js 14** con App Router y TypeScript
+- **Tailwind CSS** para estilos
+- **Chart.js** + react-chartjs-2 para las gráficas
+- **Supabase** para persistencia de historial y escenarios
