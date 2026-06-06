@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import Sidebar from "@/components/Sidebar";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -14,7 +15,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Simulador EOQ — RICOL SAS",
+  title: "RICOL SAS — Simulador EOQ",
   description: "Simulador interactivo de Cantidad Económica de Pedido para PEAD Alta Soplado — RICOL SAS",
 };
 
@@ -25,8 +26,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}>
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 flex`}>
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+          {children}
+        </div>
       </body>
     </html>
   );

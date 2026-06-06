@@ -2,96 +2,149 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-
-import { calcEOQ, BASE } from '@/lib/eoq';
+import { calcEOQ, BASE, Q_CAP } from '@/lib/eoq';
 import { getDemandaAnual, getEscenarios, isSupabaseConfigured, Escenario } from '@/lib/supabase';
+import TopBar from '@/components/TopBar';
+import EscenariosPanel from '@/components/EscenariosPanel';
 
-import ParamSliders from '@/components/ParamSliders';
-import KpiPanel from '@/components/KpiPanel';
-import DemandaBanner from '@/components/DemandaBanner';
+const ChartTC   = dynamic(() => import('@/components/ChartTC'),   { ssr: false });
+const ChartQvsD = dynamic(() => import('@/components/ChartQvsD'), { ssr: false });
+const ChartQvsS = dynamic(() => import('@/components/ChartQvsS'), { ssr: false });
 
-const ChartTC         = dynamic(() => import('@/components/ChartTC'),        { ssr: false });
-const ChartQvsD       = dynamic(() => import('@/components/ChartQvsD'),      { ssr: false });
-const ChartQvsS       = dynamic(() => import('@/components/ChartQvsS'),      { ssr: false });
-const EscenariosPanel = dynamic(() => import('@/components/EscenariosPanel'), { ssr: false });
+const fmt  = (v: number) => Math.round(v).toLocaleString('es-CO');
+const fmt1 = (v: number) => v.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-export default function HomePage() {
+export default function DashboardPage() {
   const [D, setD] = useState<number>(BASE.D);
   const [S, setS] = useState<number>(BASE.S);
   const [grafica, setGrafica] = useState<'tc' | 'd' | 's'>('tc');
-
-  const result = calcEOQ(D, S);
-
-  const [dReal, setDReal]           = useState<number | null>(null);
   const [escenarios, setEscenarios] = useState<Escenario[]>([]);
   const [supabaseOk, setSupabaseOk] = useState(true);
 
+  const result = calcEOQ(D, S);
+
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      setSupabaseOk(false);
-      return;
-    }
-
-    getDemandaAnual()
-      .then(d => { if (d > 0) setDReal(d); })
-      .catch(() => setSupabaseOk(false));
-
+    if (!isSupabaseConfigured()) { setSupabaseOk(false); return; }
+    getDemandaAnual().then(d => { if (d > 0) setD(d); }).catch(() => {});
     loadEscenarios();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadEscenarios = useCallback(async () => {
-    try {
-      const data = await getEscenarios();
-      setEscenarios(data);
-    } catch {
-      // Supabase no configurado aún — no bloquea la app
-    }
+    try { setEscenarios(await getEscenarios()); } catch { /* sin supabase */ }
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="flex flex-col min-h-screen">
+      <TopBar title="RICOL SAS" subtitle="Simulador EOQ · PEAD Alta Soplado" />
 
-      <header className="bg-[#1a3a5c] text-white px-8 py-4 flex items-center gap-4">
-        <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center font-extrabold text-lg flex-shrink-0">
-          R
-        </div>
-        <div>
-          <h1 className="text-lg font-bold leading-tight">Simulador EOQ — RICOL SAS</h1>
-          <p className="text-blue-300 text-xs mt-0.5">
-            PEAD Alta Soplado &nbsp;·&nbsp; Cantidad Económica de Pedido &nbsp;·&nbsp; PBL Optimización 2026
-          </p>
-        </div>
-      </header>
+      <main className="flex-1 p-6 flex flex-col gap-5">
 
-      <main className="flex-1 p-6 flex flex-col gap-5 max-w-[1600px] w-full mx-auto">
+        {/* ── Fila superior: sliders + KPIs ── */}
+        <div className="grid grid-cols-[300px_1fr] gap-4">
 
-        {dReal && <DemandaBanner dReal={dReal} dActual={D} />}
+          {/* Sliders */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-5">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Parámetros Variables</p>
 
-        {!supabaseOk && (
-          <div className="bg-yellow-50 border border-yellow-300 rounded-xl px-5 py-3 text-sm text-yellow-800">
-            <span className="font-semibold">⚠ Supabase no configurado.</span>{' '}
-            Agrega <code className="bg-yellow-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> y{' '}
-            <code className="bg-yellow-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> en{' '}
-            <code className="bg-yellow-100 px-1 rounded">.env.local</code> para habilitar historial y escenarios.
-            El simulador funciona completamente sin conexión.
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-600 font-medium">Demanda Anual (D)</span>
+                <span className="text-blue-600 font-bold">{fmt(D)} kg</span>
+              </div>
+              <input type="range" min={400000} max={1500000} step={1000} value={D}
+                onChange={e => setD(+e.target.value)} className="w-full accent-blue-600" />
+            </div>
+
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-600 font-medium">Costo de Pedir (S)</span>
+                <span className="text-blue-600 font-bold">${(S/1e6).toFixed(1)}M</span>
+              </div>
+              <input type="range" min={1000000} max={15000000} step={100000} value={S}
+                onChange={e => setS(+e.target.value)} className="w-full accent-blue-600" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+              <div className="bg-gray-50 rounded-lg p-3 text-center">
+                <p className="text-[10px] text-gray-400 font-semibold uppercase">H (Mantenimiento)</p>
+                <p className="text-sm font-bold text-gray-700 mt-1">$2,000</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3 text-center">
+                <p className="text-[10px] text-gray-400 font-semibold uppercase">L (Lead Time)</p>
+                <p className="text-sm font-bold text-gray-700 mt-1">30 Días</p>
+              </div>
+            </div>
           </div>
-        )}
 
-        <div className="grid grid-cols-[340px_1fr] gap-4">
-          <ParamSliders D={D} S={S} onChangeD={setD} onChangeS={setS} />
-          <KpiPanel result={result} />
+          {/* KPIs */}
+          <div className="grid grid-cols-3 gap-3">
+
+            {/* Q* */}
+            <div className="bg-white rounded-xl border-2 border-blue-200 shadow-sm p-4 flex flex-col gap-2">
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Q* (kg/pedido)</p>
+              <p className="text-3xl font-bold text-gray-900 tabular-nums">{fmt(result.Qstar)}</p>
+              <div className="w-full bg-blue-100 rounded-full h-1.5">
+                <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${Math.min(100, (result.Qfinal / Q_CAP) * 100)}%` }} />
+              </div>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full w-fit ${result.restriccionActiva ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+                {result.restriccionActiva ? 'RESTRINGIDO' : 'FACTIBLE'}
+              </span>
+            </div>
+
+            {/* N */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2">
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">N (pedidos/año)</p>
+              <p className="text-3xl font-bold text-gray-900 tabular-nums">{fmt1(result.N)}</p>
+              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                <div className="bg-gray-400 h-1.5 rounded-full" style={{ width: `${Math.min(100, (result.N / 24) * 100)}%` }} />
+              </div>
+              <span className="text-xs text-green-600 font-semibold">⊙ CICLO OPTIMIZADO</span>
+            </div>
+
+            {/* T */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2">
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">T (Tiempo entre pedidos)</p>
+              <p className="text-3xl font-bold text-gray-900 tabular-nums">{fmt1(result.T)} <span className="text-lg font-normal text-gray-400">d</span></p>
+              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                <div className="bg-blue-400 h-1.5 rounded-full" style={{ width: `${Math.min(100, (result.T / 60) * 100)}%` }} />
+              </div>
+            </div>
+
+            {/* TC */}
+            <div className="bg-white rounded-xl border-2 border-blue-100 shadow-sm p-4 flex flex-col gap-1">
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">TC (COP/año)</p>
+              <p className="text-2xl font-bold text-gray-900 tabular-nums">${(result.TC / 1e6).toFixed(1)}M</p>
+              <p className="text-xs text-gray-400">Suma de costos totales</p>
+            </div>
+
+            {/* ROP */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">ROP (Punto de Reorden)</p>
+              <p className="text-2xl font-bold text-gray-900 tabular-nums">{fmt(result.ROP)} kg</p>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full w-fit ${result.restriccionActiva ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                {result.restriccionActiva ? '⚠ NIVEL DE ALERTA' : '✓ NIVEL SEGURO'}
+              </span>
+            </div>
+
+            {/* Eficiencia */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1 items-center justify-center">
+              <div className="text-3xl text-blue-600">✓</div>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider text-center">Estado de Operación</p>
+              <p className="text-sm font-bold text-gray-800">
+                Eficiencia {(Math.min(100, (result.Qfinal / result.Qstar) * 100)).toFixed(1)}%
+              </p>
+            </div>
+
+          </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-4">
+        {/* ── Gráfica ── */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-              Visualización de Sensibilidad
-            </p>
-            <select
-              value={grafica}
-              onChange={e => setGrafica(e.target.value as typeof grafica)}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer"
-            >
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Visualización de Sensibilidad</p>
+            <select value={grafica} onChange={e => setGrafica(e.target.value as typeof grafica)}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer">
               <option value="tc">Curva de equilibrio — TC vs Q</option>
               <option value="d">Pulso del mercado — Q* vs Demanda D</option>
               <option value="s">Presión logística — Q* vs Costo de Pedir S</option>
@@ -104,22 +157,12 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* ── Escenarios ── */}
         {supabaseOk && (
-          <EscenariosPanel
-            D={D}
-            S={S}
-            result={result}
-            escenarios={escenarios}
-            onSaved={loadEscenarios}
-          />
+          <EscenariosPanel D={D} S={S} result={result} escenarios={escenarios} onSaved={loadEscenarios} />
         )}
 
       </main>
-
-      <footer className="text-center py-4 text-xs text-gray-400">
-        PBL Optimización 202610 — ICESI &nbsp;·&nbsp;
-        Laura Fernández · Alejandro Valencia · José Manuel De Las Salas &nbsp;·&nbsp; Junio 2026
-      </footer>
     </div>
   );
 }
